@@ -21,9 +21,18 @@ struct InputBuilder {
   // 3: Cell is a cascade-safe move
   // 4: N robots killed if you move there
 
-  void enhance_board(
-    CnnInput
+  static
+  void
+  enhance_board(
+    CnnInput & inp,
+    bool const flip_horiz,
+    bool const flip_vert
   ){
+    for( CnnInputMiddleLayer & a : inp ){
+      for( CnnInputBottomLayer & b : a ){
+	b.fill( 0.0 );
+      }
+    }
   }
 };
 
@@ -44,14 +53,12 @@ make_input_and_output(
 ){
   CnnIO io;
 
+  bool const flip_horiz = game.board().human_position().x > (robots_core::Board::WIDTH / 2);
+  bool const flip_vert = game.board().human_position().y > (robots_core::Board::HEIGHT / 2);
+
   //rotate_board
 
   //input
-  for( CnnInputMiddleLayer & a : io.i ){
-    for( CnnInputBottomLayer & b : a ){
-      b.fill( 0.0 );
-    }
-  }
   
 
   return io;

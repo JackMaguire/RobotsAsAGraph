@@ -1,4 +1,5 @@
 data/all_data/*[0-9]
+*~
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

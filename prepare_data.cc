@@ -1,3 +1,5 @@
+//g++ prepare_data.cc -o prepare_data --std=c++17 -I extern/RobotsCore/include/ -O3 -Wall -pedantic -Wextra -Wshadow
+
 #include "deserialize.hh"
 
 #include <iostream>

@@ -12,6 +12,8 @@ namespace fs = std::filesystem;
 #include <robots_core/forecasting.hh>
 
 constexpr auto path_to_all_data = "data/all_data/";
+constexpr auto outpath_to_training_data = "data/training_data.txt";
+constexpr auto outpath_to_validation_data = "data/validation_data.txt";
 
 //https://stackoverflow.com/questions/874134/find-out-if-string-ends-with-another-string-in-c
 bool ends_with(
@@ -108,4 +110,10 @@ int main(){
   std::cout << "n_early_teleports: " << n_early_teleports << std::endl;
 
   std::cout << training_data.str().size() << " " << validation_data.str().size() << std::endl;
+
+  //Write!
+  std::ofstream train_out( outpath_to_training_data );
+  train_out << training_data.str();
+  std::ofstream validation_out( outpath_to_validation_data );
+  validation_out << validation_data.str();
 }

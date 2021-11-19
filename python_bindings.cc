@@ -1,4 +1,4 @@
-//g++ python_bindings.cc -o robots_train$(python3-config --extension-suffix) -O3 -Wall -Wextra -Iextern/RobotsCore/include/ -Iinclude -Iextern/RobotsCore/extern/pybind11/include -std=c++17 -fPIC $(python3 -m pybind11 --includes) -shared
+//g++ python_bindings.cc -o robots_core$(python3-config --extension-suffix) -O3 -Wall -Wextra -Iinclude -Iextern/RobotsCore/extern/pybind11/include -std=c++17 -fPIC $(python3 -m pybind11 --includes) -shared -Iextern/RobotsCore/include/
 
 #include "deserialize.hh"
 

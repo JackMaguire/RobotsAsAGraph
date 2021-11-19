@@ -75,7 +75,7 @@ int main(){
       DataPoint const sample = deserialize( line );
 
       //Skip move-less keys
-      if( sample.key == Key::NONE || sample.key == Key::DELETE || sample.key == Key::R ) continue;
+      if( sample.key == Key::NONE || sample.key == Key::DELETE || sample.key == Key::R || sample.key == Key::SPACE ) continue;
 
       auto const forecasts = robots_core::forecast_all_moves(sample.game.board());
 

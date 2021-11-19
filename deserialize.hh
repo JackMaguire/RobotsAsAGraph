@@ -113,9 +113,9 @@ make_tensors( std::string const & data_string ){
   for( unsigned int i = 0; i < t->output_tensor.size(); ++i ){
     if( t->input_tensors.cached_nodes[i].special_case == node_to_assign ){
       match_found = true;
-      t->output_tensor[ i ] = 1.0;
+      t->output_tensor[ i ][0] = 1.0;
     } else {
-      t->output_tensor[ i ] = 0.0;
+      t->output_tensor[ i ][0] = 0.0;
     }
   }
 

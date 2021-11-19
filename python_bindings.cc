@@ -1,3 +1,5 @@
+//g++ python_bindings.cc -o robots_train$(python3-config --extension-suffix) -O3 -Wall -Wextra -Iextern/RobotsCore/include/ -Iinclude -Iextern/RobotsCore/extern/pybind11/include -std=c++17 -fPIC $(python3 -m pybind11 --includes) -shared
+
 #include "deserialize.hh"
 
 #define RC_EXPAND_PYMODULE

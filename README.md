@@ -28,5 +28,6 @@ all_data  training_data.txt  validation_data.txt
 ## Train
 
 ```sh
-# TODO
+mkdir train
+python3 train.py --nconv 3 --model train/model_3.h5
 ```

@@ -2,7 +2,7 @@ import argparse
 
 import tensorflow as tf
 from tensorflow.keras.layers import *
-from tensorflow.keras.models import Model
+from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
 
@@ -44,13 +44,17 @@ class RobotsDataset( Dataset ):
 '''
 
 class Loader( tf.keras.utils.Sequence ):
-    def __init__( self, filename, batch_size=64 ):
+    def __init__( self, filename, batch_size=64, shuffle=True ):
         with open( filename ) as file:
             self.samples = [line.rstrip() for line in file.readlines() if len(line) > 5]
         print( "Loaded {} lines".format( len(self.samples) ) )
 
         self.batch_size = batch_size
         self.n_batches = int( len(self.samples) / batch_size )
+
+        self.shuffle = shuffle
+
+        self.on_epoch_end()
 
     def __len__( self ):
         return self.n_batches
@@ -88,7 +92,8 @@ class Loader( tf.keras.utils.Sequence ):
         return [x, a, e, i, legal_move_mask], np.vstack( Os )
 
     def on_epoch_end(self):
-        random.shuffle( self.samples )
+        if self.shuffle:
+            random.shuffle( self.samples )
 
 def build_model( nconv: int, compile: bool ):
     F = 8
@@ -186,6 +191,23 @@ def evaluate_model( model, validation_loader, loss_fn ):
     y_pred = np.vstack(y_pred)
     return loss_fn(y_true, y_pred)
 
+def preview_preds( model, validation_loader, p ):
+    test_x, test_y = validation_loader[0]
+    x = model( test_x )
+
+    data = []
+
+    #print( x )
+    x = x.numpy()
+    for i in range( 0, len(x) ):
+        if( test_y[i][0] > 0.5 ):
+            if p:
+                print( x[i][0], test_x[-1][i], test_x[-2][i], test_y[i][0] )
+            else:
+                data.append( [ x[i][0], test_x[-1][i], test_x[-2][i], test_y[i][0] ] )
+
+    return np.asarray( data )
+
 def train_by_hand( model, training_loader, validation_loader ):
     #################
     # Config
@@ -217,18 +239,7 @@ def train_by_hand( model, training_loader, validation_loader ):
         validation_loss = evaluate_model( model, validation_loader, loss_fn )
         print("Epoch: {} Training Loss: {} Validation Loss: {}".format(epoch, loss / step, validation_loss))
 
-        
-    test_x, test_y = validation_loader[0]
-    x = model( test_x )
-
-    #print( x )
-    x = x.numpy()
-    for i in range( 0, len(x) ):
-        if( test_y[i][0] > 0.5 ):
-            print( x[i][0], test_x[-1][i], test_x[-2][i], test_y[i][0] )
-    #exit( 0 )
-    #history = model.fit( x=test_x, y=test_y, epochs=1000, shuffle=False, callbacks=callbacks, batch_size=32 )
-    
+           
 
 if __name__ == '__main__':
     #test()
@@ -240,19 +251,20 @@ if __name__ == '__main__':
 
 
     training_loader = Loader( "data/training_data.txt" )
-    validation_loader = Loader( "data/validation_data.txt" )
-
-    '''
-    print( len( validation_loader ) )
-    inps, outs = validation_loader[0]
-    for i in range( 0, 4 ):
-        print( i, inps[i].shape )
-    print( outs.shape, sum(outs) )
-    '''
+    validation_loader = Loader( "data/validation_data.txt", shuffle = False )
 
     model = build_model( args.nconv, compile=False )
     model.summary()
 
     train_by_hand( model, training_loader, validation_loader )
+    data1 = preview_preds( model, validation_loader, p=False )
 
     model.save( args.model )
+
+    custom_objects = { "XENetConv": XENetConv }
+    model2 = load_model( args.model, custom_objects=custom_objects )
+    data2 = preview_preds( model2, validation_loader, p=False )
+    
+    np.testing.assert_allclose( data1, data2 )
+    print( "Save/Load test passed!" )
+    

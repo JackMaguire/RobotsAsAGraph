@@ -227,8 +227,11 @@ def train_by_hand( model, training_loader, validation_loader ):
 
 
     min_loss = 9999
+    best_weights = model.get_weights()
+
     epoch_for_min_loss = -1
     epoch_for_last_lr_decrease = epoch_for_min_loss
+    
 
     for epoch in range( 0, 1000 ):
         loss = 0
@@ -239,15 +242,28 @@ def train_by_hand( model, training_loader, validation_loader ):
             #print( loss )
             print( step, "/" , len(training_loader), " ... ", loss.numpy()/step )
             break #TODO
+
         validation_loss = evaluate_model( model, validation_loader, loss_fn )
 
         validation_loss = np.round( validation_loss, 5 )
 
         print("Epoch: {0} Training Loss: {1:.5f} Validation Loss: {2:.5f}".format(epoch, loss.numpy() / step, np.round( validation_loss, 5 )))
 
+        if epoch == 0:
+            # Freeze batch norm
+            for layer in model.layers:
+                if layer.name.startswith( "batch_normalization" ):
+                    assert isinstance( layer, BatchNormalization )
+                    print( "FREEZING", layer.name )
+                    layer.trainable = False
+                    layer._per_input_updates = {}
+                else:
+                    assert not isinstance( layer, BatchNormalization )
+
         if validation_loss < min_loss:
             print( "NEW MIN" )
             min_loss = validation_loss
+            best_weights = model.get_weights()
             epoch_for_min_loss = epoch
         else:
             if epoch - epoch_for_min_loss == 5:
@@ -258,6 +274,7 @@ def train_by_hand( model, training_loader, validation_loader ):
                 learning_rate = learning_rate / 10.0
                 optimizer = Adam( learning_rate )
 
+        model.set_weights( best_weights )
            
 
 if __name__ == '__main__':

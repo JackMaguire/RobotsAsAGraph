@@ -17,7 +17,7 @@ from scipy import sparse as sp
 from spektral.data.utils import to_disjoint
 from spektral.utils.sparse import sp_matrix_to_sp_tensor
 from spektral.layers.ops.scatter import unsorted_segment_softmax
-from spektral.layers import XENetConv
+from spektral.layers import XENetConv, CrystalConv, ECCConv
 from spektral.data.loaders import DisjointLoader
 from spektral.data.dataset import Dataset
 from spektral.data.dataset import Graph
@@ -110,11 +110,11 @@ def build_model( nconv: int, compile: bool ):
     I = I_in
     L = L_in
 
-    X = BatchNormalization()(X)
-    E = BatchNormalization()(E)
+    #X = BatchNormalization()(X)
+    #E = BatchNormalization()(E)
 
-    X = Dense( Fh, activation='relu' )(X)
-    E = Dense( Sh, activation='relu' )(E)
+    #X = Dense( Fh, activation='relu' )(X)
+    #E = Dense( Sh, activation='relu' )(E)
 
     #print( X, A, E, I )
 
@@ -124,16 +124,19 @@ def build_model( nconv: int, compile: bool ):
         else:
             edge_channels=Sh
 
+        '''
         X, E = XENetConv( stack_channels=[Skh,Skh],
                           node_channels=Fh, edge_channels=edge_channels,
                           node_activation='relu', edge_activation='relu',
                           attention=True )( [X, A, E] )
+        '''
+        X = ECCConv( Fh, activation='relu' )( [ X, A, E ] )
 
-    X = Dense( Fh, activation='relu' )(X)
-    X = Dense( 1, activation='softplus' )(X)
-    X = Multiply()([X,L])
-    X = unsorted_segment_softmax( X, I )
-    X = Multiply()([X,L])
+    #X = Dense( Fh, activation='relu' )(X)
+    #X = Dense( 1, activation='softplus' )(X)
+    #X = Multiply()([X,L])
+    #X = unsorted_segment_softmax( X, I )
+    #X = Multiply()([X,L])
 
     Out = X
 
@@ -147,7 +150,7 @@ def train_by_hand( model, training_loader, validation_loader ):
     #################
     # Config
     #################
-    learning_rate = 1e-3  # Learning rate
+    learning_rate = 1e-5  # Learning rate
     optimizer = Adam( learning_rate )
     loss_fn = BinaryCrossentropy()
 
@@ -179,6 +182,8 @@ def train_by_hand( model, training_loader, validation_loader ):
     def train_step(inputs, target):
         with tf.GradientTape() as tape:
             predictions = model(inputs, training=True)
+            print( target, predictions )
+            print( "!!!", loss_fn(target, predictions) )
             loss = loss_fn(target, predictions) + sum(model.losses)
         gradients = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -191,6 +196,7 @@ def train_by_hand( model, training_loader, validation_loader ):
         for batch in validation_loader:
             loss += train_step(*batch)
             step += 1
+            print( loss )
             print( step, "/" , len(validation_loader), " ... ", loss.numpy()/step )
             if step == 10:
                 break

@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import BinaryCrossentropy
 
 import numpy as np
 
@@ -77,7 +78,7 @@ class Loader( tf.keras.utils.Sequence ):
         x, a, e, i = to_disjoint( Xs, [sp.coo_matrix(a) for a in As], Es )
 
         legal_move_mask = x[:, -1]
-        print( legal_move_mask.shape )
+        #print( legal_move_mask.shape )
 
         #print( subsamples )
         a = sp_matrix_to_sp_tensor(a)
@@ -133,7 +134,8 @@ def build_model( nconv: int ):
     X = Dense( Fh, activation='relu' )(X)
     X = Dense( 1, activation='softplus' )(X)
     X = Multiply()([X,L])
-    #X = unsorted_segment_softmax( X, I )
+    X = unsorted_segment_softmax( X, I )
+    X = Multiply()([X,L])
 
     Out = X
 
@@ -142,28 +144,13 @@ def build_model( nconv: int ):
 
     return model
 
-if __name__ == '__main__':
-    #test()
+def train_by_hand( model, training_loader, validation_loader ):
+    #################
+    # Config
+    #################
+    learning_rate = 1e-3  # Learning rate
+    epochs = 1000  # Number of training epochs
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument( "--model", help="Where should we save the output model?", required=True, type=str )
-    parser.add_argument( "--nconv", help="How Many XENet layers should we have?", required=True, type=int )
-    args = parser.parse_args()
-
-
-    training_loader = Loader( "data/training_data.txt" )
-    validation_loader = Loader( "data/validation_data.txt" )
-
-    '''
-    print( len( validation_loader ) )
-    inps, outs = validation_loader[0]
-    for i in range( 0, 4 ):
-        print( i, inps[i].shape )
-    print( outs.shape, sum(outs) )
-    '''
-
-    model = build_model( args.nconv )
-    model.summary()
 
     lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
         monitor="val_loss",
@@ -211,7 +198,9 @@ if __name__ == '__main__':
         print( i, test_x[i].shape )
     print( test_y.shape, sum(test_y) )
 
+    # see spektral/examples/graph_prediction/ogbg-mol-hiv_ecc.py
     x = model( test_x )
+
     #print( x )
     x = x.numpy()
     for i in range( 0, len(x) ):
@@ -220,5 +209,30 @@ if __name__ == '__main__':
 
     #history = model.fit( x=test_x, y=test_y, epochs=1000, shuffle=False, callbacks=callbacks, batch_size=32 )
     
+
+if __name__ == '__main__':
+    #test()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument( "--model", help="Where should we save the output model?", required=True, type=str )
+    parser.add_argument( "--nconv", help="How Many XENet layers should we have?", required=True, type=int )
+    args = parser.parse_args()
+
+
+    training_loader = Loader( "data/training_data.txt" )
+    validation_loader = Loader( "data/validation_data.txt" )
+
+    '''
+    print( len( validation_loader ) )
+    inps, outs = validation_loader[0]
+    for i in range( 0, 4 ):
+        print( i, inps[i].shape )
+    print( outs.shape, sum(outs) )
+    '''
+
+    model = build_model( args.nconv )
+    model.summary()
+
+    train_by_hand( model, training_loader, validation_loader )
 
     model.save( args.model )

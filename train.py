@@ -44,7 +44,7 @@ class RobotsDataset( Dataset ):
 '''
 
 class Loader( tf.keras.utils.Sequence ):
-    def __init__( self, filename, batch_size=32 ):
+    def __init__( self, filename, batch_size=64 ):
         with open( filename ) as file:
             self.samples = [line.rstrip() for line in file.readlines() if len(line) > 5]
         print( "Loaded {} lines".format( len(self.samples) ) )
@@ -110,11 +110,11 @@ def build_model( nconv: int, compile: bool ):
     I = I_in
     L = L_in
 
-    #X = BatchNormalization()(X)
-    #E = BatchNormalization()(E)
+    X = BatchNormalization()(X)
+    E = BatchNormalization()(E)
 
-    #X = Dense( Fh, activation='relu' )(X)
-    #E = Dense( Sh, activation='relu' )(E)
+    X = Dense( Fh, activation='relu' )(X)
+    E = Dense( Sh, activation='relu' )(E)
 
     #print( X, A, E, I )
 
@@ -132,11 +132,11 @@ def build_model( nconv: int, compile: bool ):
         #'''
         #X = ECCConv( Fh, activation='relu' )( [ X, A, E ] )
 
-    #X = Dense( Fh, activation='relu' )(X)
+    X = Dense( Fh, activation='relu' )(X)
     X = Dense( 1, activation='softplus' )(X)
-    #X = Multiply()([X,L])
-    #X = unsorted_segment_softmax( X, I )
-    #X = Multiply()([X,L])
+    X = Multiply()([X,L])
+    X = unsorted_segment_softmax( X, I )
+    X = Multiply()([X,L])
 
     Out = X
 
@@ -172,6 +172,20 @@ def train_by_fit( model, training_loader, validation_loader ):
     print( test_y.shape, sum(test_y) )
     '''
 
+def evaluate_model( model, validation_loader, loss_fn ):
+    y_true = []
+    y_pred = []
+    for batch in validation_loader:
+        inputs, target = batch
+        p = model(inputs, training=False)
+        y_true.append(target)
+        y_pred.append(p.numpy())
+        if( len(y_true) > 1 ): break
+
+    y_true = np.vstack(y_true)
+    y_pred = np.vstack(y_pred)
+    return loss_fn(y_true, y_pred)
+
 def train_by_hand( model, training_loader, validation_loader ):
     #################
     # Config
@@ -194,36 +208,25 @@ def train_by_hand( model, training_loader, validation_loader ):
         loss = 0
         step = 0
         for batch in training_loader:
-            inp = batch[0]
-            a_dense = tf.sparse.to_dense( inp[1] ).numpy()
-            #print( a_dense )
-            for i in range( 0, 5 ):
-                if i == 1: continue
-                print( i, np.any(np.isnan(inp[i])) )
-
-            for i in range( 0, len(inp[2][0])):
-                print( i, np.any(np.isnan(inp[2][:][i])) )
-
-            outp = batch[1]
-            print( np.any(np.isnan(outp)) )
-
             loss += train_step(*batch)
             step += 1
             #print( loss )
             print( step, "/" , len(training_loader), " ... ", loss.numpy()/step )
-            exit( 0 )
             if step == 10:
                 break
-        print("Loss: {}".format(loss / step))
+        validation_loss = evaluate_model( model, validation_loader, loss_fn )
+        print("Epoch: {} Training Loss: {} Validation Loss: {}".format(epoch, loss / step, validation_loss))
 
+        
+    test_x, test_y = validation_loader[0]
     x = model( test_x )
 
     #print( x )
     x = x.numpy()
     for i in range( 0, len(x) ):
-        print( x[i][0], test_x[-1][i], test_x[-2][i], test_y[i][0] )
-    exit( 0 )
-
+        if( test_y[i][0] > 0.5 ):
+            print( x[i][0], test_x[-1][i], test_x[-2][i], test_y[i][0] )
+    #exit( 0 )
     #history = model.fit( x=test_x, y=test_y, epochs=1000, shuffle=False, callbacks=callbacks, batch_size=32 )
     
 
@@ -236,7 +239,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    training_loader = Loader( "data/training_data.txt", batch_size=1 )
+    training_loader = Loader( "data/training_data.txt" )
     validation_loader = Loader( "data/validation_data.txt" )
 
     '''

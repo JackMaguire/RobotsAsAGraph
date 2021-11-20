@@ -124,16 +124,16 @@ def build_model( nconv: int, compile: bool ):
         else:
             edge_channels=Sh
 
-        '''
+        #'''
         X, E = XENetConv( stack_channels=[Skh,Skh],
                           node_channels=Fh, edge_channels=edge_channels,
                           node_activation='relu', edge_activation='relu',
                           attention=True )( [X, A, E] )
-        '''
-        X = ECCConv( Fh, activation='relu' )( [ X, A, E ] )
+        #'''
+        #X = ECCConv( Fh, activation='relu' )( [ X, A, E ] )
 
     #X = Dense( Fh, activation='relu' )(X)
-    #X = Dense( 1, activation='softplus' )(X)
+    X = Dense( 1, activation='softplus' )(X)
     #X = Multiply()([X,L])
     #X = unsorted_segment_softmax( X, I )
     #X = Multiply()([X,L])
@@ -146,15 +146,7 @@ def build_model( nconv: int, compile: bool ):
 
     return model
 
-def train_by_hand( model, training_loader, validation_loader ):
-    #################
-    # Config
-    #################
-    learning_rate = 1e-5  # Learning rate
-    optimizer = Adam( learning_rate )
-    loss_fn = BinaryCrossentropy()
-
-
+def train_by_fit( model, training_loader, validation_loader ):
     lr_callback = tf.keras.callbacks.ReduceLROnPlateau(
         monitor="val_loss",
         factor=0.1,
@@ -171,19 +163,31 @@ def train_by_hand( model, training_loader, validation_loader ):
 
     #history = model.fit( x=training_loader, validation_data=validation_loader, epochs=1000, shuffle=False, callbacks=callbacks, batch_size=1 )
     #history = model.fit( x=training_loader, epochs=1000, shuffle=False, callbacks=callbacks, batch_size=1 )
+    '''
     test_x = training_loader[0][0]
     test_y = training_loader[0][1]
 
     for i in range( 0, 5 ):
         print( i, test_x[i].shape )
     print( test_y.shape, sum(test_y) )
+    '''
+
+def train_by_hand( model, training_loader, validation_loader ):
+    #################
+    # Config
+    #################
+    learning_rate = 1e-5  # Learning rate
+    optimizer = Adam( learning_rate )
+    loss_fn = BinaryCrossentropy()
 
     # see spektral/examples/graph_prediction/ogbg-mol-hiv_ecc.py
     def train_step(inputs, target):
         with tf.GradientTape() as tape:
             predictions = model(inputs, training=True)
-            print( target, predictions )
-            print( "!!!", loss_fn(target, predictions) )
+            #print( target, predictions )
+            #print( "TARGET", target )
+            #print( "PREDICTIONS", predictions )
+            #print( "!!!", loss_fn(target, predictions) )
             loss = loss_fn(target, predictions) + sum(model.losses)
         gradients = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -193,11 +197,25 @@ def train_by_hand( model, training_loader, validation_loader ):
     for epoch in range( 0, 1 ):
         loss = 0
         step = 0
-        for batch in validation_loader:
+        for batch in training_loader:
+            inp = batch[0]
+            a_dense = tf.sparse.to_dense( inp[1] ).numpy()
+            #print( a_dense )
+            for i in range( 0, 5 ):
+                if i == 1: continue
+                print( i, np.any(np.isnan(inp[i])) )
+
+            for i in range( 0, len(inp[2][0])):
+                print( i, np.any(np.isnan(inp[2][:][i])) )
+
+            outp = batch[1]
+            print( np.any(np.isnan(outp)) )
+
             loss += train_step(*batch)
             step += 1
-            print( loss )
-            print( step, "/" , len(validation_loader), " ... ", loss.numpy()/step )
+            #print( loss )
+            print( step, "/" , len(training_loader), " ... ", loss.numpy()/step )
+            exit( 0 )
             if step == 10:
                 break
         print("Loss: {}".format(loss / step))
@@ -222,7 +240,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    training_loader = Loader( "data/training_data.txt" )
+    training_loader = Loader( "data/training_data.txt", batch_size=1 )
     validation_loader = Loader( "data/validation_data.txt" )
 
     '''

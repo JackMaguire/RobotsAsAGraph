@@ -176,21 +176,6 @@ def train_by_fit( model, training_loader, validation_loader ):
         print( i, test_x[i].shape )
     print( test_y.shape, sum(test_y) )
     '''
-
-def evaluate_model( model, validation_loader, loss_fn ):
-    y_true = []
-    y_pred = []
-    for batch in validation_loader:
-        inputs, target = batch
-        p = model(inputs, training=False)
-        y_true.append(target)
-        y_pred.append(p.numpy())
-        if( len(y_true) > 1 ): break
-
-    y_true = np.vstack(y_true)
-    y_pred = np.vstack(y_pred)
-    return loss_fn(y_true, y_pred)
-
 def preview_preds( model, validation_loader, p ):
     test_x, test_y = validation_loader[0]
     x = model( test_x )
@@ -208,11 +193,26 @@ def preview_preds( model, validation_loader, p ):
 
     return np.asarray( data )
 
+def evaluate_model( model, validation_loader, loss_fn ):
+    y_true = []
+    y_pred = []
+    for batch in validation_loader:
+        inputs, target = batch
+        p = model(inputs, training=False)
+        y_true.append(target)
+        y_pred.append(p.numpy())
+        break #TODO
+
+    y_true = np.vstack(y_true)
+    y_pred = np.vstack(y_pred)
+    return loss_fn(y_true, y_pred)
+
+
 def train_by_hand( model, training_loader, validation_loader ):
     #################
     # Config
     #################
-    learning_rate = 1e-5  # Learning rate
+    learning_rate = 1e-4  # Learning rate
     optimizer = Adam( learning_rate )
     loss_fn = BinaryCrossentropy()
 
@@ -226,7 +226,11 @@ def train_by_hand( model, training_loader, validation_loader ):
         return loss
 
 
-    for epoch in range( 0, 1 ):
+    min_loss = 9999
+    epoch_for_min_loss = -1
+    epoch_for_last_lr_decrease = epoch_for_min_loss
+
+    for epoch in range( 0, 1000 ):
         loss = 0
         step = 0
         for batch in training_loader:
@@ -234,10 +238,25 @@ def train_by_hand( model, training_loader, validation_loader ):
             step += 1
             #print( loss )
             print( step, "/" , len(training_loader), " ... ", loss.numpy()/step )
-            if step == 10:
-                break
+            break #TODO
         validation_loss = evaluate_model( model, validation_loader, loss_fn )
-        print("Epoch: {} Training Loss: {} Validation Loss: {}".format(epoch, loss / step, validation_loss))
+
+        validation_loss = np.round( validation_loss, 5 )
+
+        print("Epoch: {0} Training Loss: {1:.5f} Validation Loss: {2:.5f}".format(epoch, loss.numpy() / step, np.round( validation_loss, 5 )))
+
+        if validation_loss < min_loss:
+            print( "NEW MIN" )
+            min_loss = validation_loss
+            epoch_for_min_loss = epoch
+        else:
+            if epoch - epoch_for_min_loss == 5:
+                return
+            elif epoch - epoch_for_min_loss >= 2 and epoch - epoch_for_last_lr_decrease >= 2:
+                print( "DECREASING LR" )
+                epoch_for_last_lr_decrease = epoch
+                learning_rate = learning_rate / 10.0
+                optimizer = Adam( learning_rate )
 
            
 

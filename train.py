@@ -129,10 +129,12 @@ def build_model( nconv: int ):
                           node_activation='relu', edge_activation='relu',
                           attention=True )( [X, A, E] )
 
-    X = Dense( Fh, activation=None )(X)
-    X = Multiply()([X,L])
-    X = unsorted_segment_softmax( X, I )
     '''
+    X = Dense( Fh, activation='relu' )(X)
+    X = Dense( 1, activation='softplus' )(X)
+    X = Multiply()([X,L])
+    #X = unsorted_segment_softmax( X, I )
+
     Out = X
 
     model = Model( inputs=[X_in,A_in,E_in,I_in,L_in], outputs=Out )
@@ -152,11 +154,13 @@ if __name__ == '__main__':
     training_loader = Loader( "data/training_data.txt" )
     validation_loader = Loader( "data/validation_data.txt" )
 
+    '''
     print( len( validation_loader ) )
     inps, outs = validation_loader[0]
     for i in range( 0, 4 ):
         print( i, inps[i].shape )
     print( outs.shape, sum(outs) )
+    '''
 
     model = build_model( args.nconv )
     model.summary()
@@ -182,6 +186,7 @@ if __name__ == '__main__':
 
     #test_x = [ np.expand_dims( x, axis=0 ) for x in test_x ]
 
+    '''
     q = spektral.datasets.qm7.QM7()
     l = DisjointLoader( q )
     #i = q.read()
@@ -201,7 +206,19 @@ if __name__ == '__main__':
 
     print( test_y.shape, tf.keras.backend.is_sparse(test_y) )
 
-    history = model.fit( x=test_x, y=test_y, epochs=1000, shuffle=False, callbacks=callbacks, batch_size=32 )
+    '''
+    for i in range( 0, 5 ):
+        print( i, test_x[i].shape )
+    print( test_y.shape, sum(test_y) )
+
+    x = model( test_x )
+    #print( x )
+    x = x.numpy()
+    for i in range( 0, len(x) ):
+        print( x[i], test_x[-1][i], test_x[-2][i] )
+    exit( 0 )
+
+    #history = model.fit( x=test_x, y=test_y, epochs=1000, shuffle=False, callbacks=callbacks, batch_size=32 )
     
 
     model.save( args.model )

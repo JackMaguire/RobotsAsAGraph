@@ -97,7 +97,16 @@ int main(){
       //Skip obvious teleports?
       //if( num_safe_moves == 0 ) continue;
 
-      if( validation and num_safe_moves > 0 and sample.key == Key::T ) ++n_early_teleports;
+      if( num_safe_moves > 0 and sample.key == Key::T ) {
+	++n_early_teleports;
+
+	//upsample safe teleports
+	stream << line << '\n';
+	stream << line << '\n';
+	stream << line << '\n';
+	stream << line << '\n';
+	stream << line << '\n';
+      }
 
       stream << line << '\n';
     }

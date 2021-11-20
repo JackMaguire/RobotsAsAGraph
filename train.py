@@ -201,7 +201,6 @@ def evaluate_model( model, validation_loader, loss_fn ):
         p = model(inputs, training=False)
         y_true.append(target)
         y_pred.append(p.numpy())
-        break #TODO
 
     y_true = np.vstack(y_true)
     y_pred = np.vstack(y_pred)
@@ -239,9 +238,7 @@ def train_by_hand( model, training_loader, validation_loader ):
         for batch in training_loader:
             loss += train_step(*batch)
             step += 1
-            #print( loss )
             print( step, "/" , len(training_loader), " ... ", loss.numpy()/step )
-            break #TODO
 
         validation_loss = evaluate_model( model, validation_loader, loss_fn )
 

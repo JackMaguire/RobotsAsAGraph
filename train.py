@@ -184,10 +184,6 @@ def train_by_hand( model, training_loader, validation_loader ):
     def train_step(inputs, target):
         with tf.GradientTape() as tape:
             predictions = model(inputs, training=True)
-            #print( target, predictions )
-            #print( "TARGET", target )
-            #print( "PREDICTIONS", predictions )
-            #print( "!!!", loss_fn(target, predictions) )
             loss = loss_fn(target, predictions) + sum(model.losses)
         gradients = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, model.trainable_variables))

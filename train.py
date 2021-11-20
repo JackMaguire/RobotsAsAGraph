@@ -6,6 +6,8 @@ from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
 
+from tqdm import tqdm
+
 import numpy as np
 
 import robots_core
@@ -235,10 +237,10 @@ def train_by_hand( model, training_loader, validation_loader ):
     for epoch in range( 0, 1000 ):
         loss = 0
         step = 0
-        for batch in training_loader:
+        for batch in tqdm(training_loader):
             loss += train_step(*batch)
             step += 1
-            print( step, "/" , len(training_loader), " ... ", loss.numpy()/step )
+            #print( step, "/" , len(training_loader), " ... ", loss.numpy()/step )
 
         validation_loss = evaluate_model( model, validation_loader, loss_fn )
 

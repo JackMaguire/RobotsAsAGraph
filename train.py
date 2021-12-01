@@ -31,6 +31,17 @@ def test():
     print( t.input_tensors )
     print( t.output_tensor )
 
+def better_unsorted_segment_softmax(x, indices, mask):
+    n_nodes = tf.reduce_max(indices)+1
+    mask = tf.reshape( mask, tf.shape(x) )
+    print( mask.shape )
+    print( tf.exp( x ).shape )
+    e_x = mask * tf.exp( x )
+    e_x /= tf.gather(
+        tf.math.unsorted_segment_sum(e_x, indices, n_nodes) + 1e-9, indices
+    )
+    return e_x
+
 '''
 class RobotsDataset( Dataset ):
 
@@ -98,7 +109,7 @@ class Loader( tf.keras.utils.Sequence ):
             random.shuffle( self.samples )
 
 def build_model( nconv: int, compile: bool ):
-    F = 8
+    F = 10
     S = 8
 
     Fh  = 16 # Hidden Node
@@ -142,7 +153,7 @@ def build_model( nconv: int, compile: bool ):
     X = Dense( Fh, activation='relu' )(X)
     X = Dense( 1, activation='softplus' )(X)
     X = Multiply()([X,L])
-    X = unsorted_segment_softmax( X, I )
+    X = better_unsorted_segment_softmax( X, I, L )
     X = Multiply()([X,L])
 
     Out = X
@@ -276,8 +287,52 @@ def train_by_hand( model, training_loader, validation_loader ):
         model.set_weights( best_weights )
            
 
+def test2():
+    F = 10
+    S = 8
+
+    Fh  = 16 # Hidden Node
+    Sh  = 16 # Hidden Edge
+    Skh = 32 # Hidden Stack
+    
+    X_in = Input( name="X_in", shape=(F,) )
+    A_in = Input( name="A_in", shape=(None,), sparse=True )
+    E_in = Input( name="E_in", shape=(S,) )
+    I_in = Input( name="I_in", shape=(), dtype=tf.int32 )
+    L_in = Input( name="L_in", shape=() ) #Legal move mask
+
+    X = X_in
+    A = A_in
+    E = E_in
+    I = I_in
+    L = L_in
+
+    X = BatchNormalization()(X)
+    E = BatchNormalization()(E)
+
+    X = Dense( 1, activation='relu' )(X)
+    E = Dense( 1, activation='relu' )(E)
+
+    Out = better_unsorted_segment_softmax( X, I, L )
+    #Out = unsorted_segment_softmax( X, I )
+    model = Model( inputs=[X_in,A_in,E_in,I_in,L_in], outputs=Out )
+    
+    validation_loader = Loader( "data/validation_data.txt", shuffle = False, batch_size=4 )
+
+    #t = validation_loader[0]
+    inputs, target = validation_loader[0]
+    #print( inputs )
+
+    o = model( inputs )
+
+    for i in range( 0, len(inputs[-1]) ):
+        print( inputs[-2][i], inputs[-1][i], o[i][0].numpy() )
+    #print( inputs[0] )
+    #print( o )
+
 if __name__ == '__main__':
-    #test()
+    #test2()
+    #exit( 0 )
 
     parser = argparse.ArgumentParser()
     parser.add_argument( "--model", help="Where should we save the output model?", required=True, type=str )

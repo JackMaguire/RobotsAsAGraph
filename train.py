@@ -347,7 +347,7 @@ if __name__ == '__main__':
     model = build_model( args.nconv, compile=False )
     model.summary()
 
-    train_by_hand( model, training_loader, validation_loader, model_name )
+    train_by_hand( model, training_loader, validation_loader, args.model )
     data1 = preview_preds( model, validation_loader, p=False )
 
     model.save( args.model )

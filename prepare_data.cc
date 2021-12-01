@@ -94,14 +94,13 @@ int main(){
       //std::cout << "num_safe_moves: " << num_safe_moves << std::endl;
       ++save_move_hist[ num_safe_moves ];
 
-      //Skip obvious teleports?
-      //if( num_safe_moves == 0 ) continue;
+      //Skip obvious teleports
+      if( num_safe_moves == 0 ) continue;
 
       if( num_safe_moves > 0 and sample.key == Key::T ) {
 	++n_early_teleports;
 
 	//upsample safe teleports
-	stream << line << '\n';
 	stream << line << '\n';
 	stream << line << '\n';
 	stream << line << '\n';

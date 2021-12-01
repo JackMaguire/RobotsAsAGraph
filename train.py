@@ -34,9 +34,11 @@ def test():
 def better_unsorted_segment_softmax(x, indices, mask):
     n_nodes = tf.reduce_max(indices)+1
     mask = tf.reshape( mask, tf.shape(x) )
-    print( mask.shape )
-    print( tf.exp( x ).shape )
-    e_x = mask * tf.exp( x )
+    #print( mask.shape )
+    #print( tf.exp( x ).shape )
+    e_x = mask * tf.exp(
+        x - tf.gather(tf.math.unsorted_segment_max(x, indices, n_nodes), indices)
+    )
     e_x /= tf.gather(
         tf.math.unsorted_segment_sum(e_x, indices, n_nodes) + 1e-9, indices
     )

@@ -153,10 +153,10 @@ def build_model( nconv: int, compile: bool ):
         #X = ECCConv( Fh, activation='relu' )( [ X, A, E ] )
 
     X = Dense( Fh, activation='relu' )(X)
-    X = Dense( 1, activation='softplus' )(X)
-    X = Multiply()([X,L])
+    X = Dense( 1, activation=None )(X)
+    #X = Multiply()([X,L]) #Not Needed
     X = better_unsorted_segment_softmax( X, I, L )
-    X = Multiply()([X,L])
+    #X = Multiply()([X,L]) #Not Needed
 
     Out = X
 
@@ -237,6 +237,7 @@ def train_by_hand( model, training_loader, validation_loader, model_name ):
             loss = loss_fn(target, predictions) + sum(model.losses)
         gradients = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+        #print( "TRAIN LOSS", loss.numpy() )
         return loss
 
 
@@ -256,7 +257,7 @@ def train_by_hand( model, training_loader, validation_loader, model_name ):
             #print( step, "/" , len(training_loader), " ... ", loss.numpy()/step )
 
         validation_loss = evaluate_model( model, validation_loader, loss_fn )
-
+        #print( "VAL LOSS", validation_loss )
         validation_loss = np.round( validation_loss, 5 )
 
         print("Epoch: {0} Training Loss: {1:.5f} Validation Loss: {2:.5f}".format(epoch, loss.numpy() / step, np.round( validation_loss, 5 )))

@@ -220,7 +220,7 @@ def evaluate_model( model, validation_loader, loss_fn ):
     return loss_fn(y_true, y_pred)
 
 
-def train_by_hand( model, training_loader, validation_loader ):
+def train_by_hand( model, training_loader, validation_loader, model_name ):
     #################
     # Config
     #################
@@ -275,6 +275,7 @@ def train_by_hand( model, training_loader, validation_loader ):
             min_loss = validation_loss
             best_weights = model.get_weights()
             epoch_for_min_loss = epoch
+            model.save( model_name + ".checkpoint.h5" )
         else:
             if epoch - epoch_for_min_loss == 5:
                 return
@@ -346,7 +347,7 @@ if __name__ == '__main__':
     model = build_model( args.nconv, compile=False )
     model.summary()
 
-    train_by_hand( model, training_loader, validation_loader )
+    train_by_hand( model, training_loader, validation_loader, model_name )
     data1 = preview_preds( model, validation_loader, p=False )
 
     model.save( args.model )

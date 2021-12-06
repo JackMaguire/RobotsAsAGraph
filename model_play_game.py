@@ -21,18 +21,6 @@ from spektral.data.utils import to_disjoint
 from spektral.utils.sparse import sp_matrix_to_sp_tensor
 from spektral.layers import XENetConv, CrystalConv, ECCConv
 
-
-def call_make_tensors( game ):
-    # TODO replace with actual method once we can recompile
-    s = ','.join( str(i) for i in [
-        game.board().get_stringified_representation(),
-        game.n_safe_teleports_remaining(),
-        game.round(),
-        1
-    ])
-    return make_tensors( s )
-
-
 def move( game, model ) -> bool:
     #silly append pattern, but maximizes similarity to train.py
     Xs = []
@@ -40,11 +28,11 @@ def move( game, model ) -> bool:
     Es = []
     Os = []
 
-    t = call_make_tensors( game )
+    dg = robots_core.graph.DenseGraph( game )
 
-    Xs.append( np.asarray( t.input_tensors.x ) )
-    As.append( np.asarray( t.input_tensors.a ) )
-    Es.append( np.asarray( t.input_tensors.e ) )
+    Xs.append( np.asarray( dg.x ) )
+    As.append( np.asarray( dg.a ) )
+    Es.append( np.asarray( dg.e ) )
     
     x, a, e, i = to_disjoint( Xs, [sp.coo_matrix(a) for a in As], Es )
 
@@ -54,32 +42,48 @@ def move( game, model ) -> bool:
     assert tf.keras.backend.is_sparse( a )
     inp = [x, a, e, i, legal_move_mask]
     pred = model( inp )
-    print( pred )
+    #print( pred )
 
     pred = pred.numpy()[:,0]
     pred_node_i = np.argmax( pred )
-    print( pred.shape, pred_node_i )
+    #print( pred.shape, pred_node_i )
 
-    pred_node = t.input_tensors.cached_nodes[ pred_node_i ]
+    pred_node = dg.cached_nodes[ pred_node_i ]
     pred_node_int = int(pred_node.special_case)
-    print( pred_node.special_case, pred_node_int )
+    #print( pred_node.special_case, pred_node_int )
 
     tele = pred_node_int > 9 # TODO
     if tele:
         game_over = game.teleport()
     else:
-        print( pred_node.dx(), pred_node.dy() )
+        #print( pred_node.dx(), pred_node.dy() )
         game_over = game.move_human( pred_node.dx(), pred_node.dy() )
     
     return game_over
+
+def maybe_cascade( game ) -> bool:
+    if( game.board().move_is_cascade_safe( 0, 0 ) ):
+        game_over = game.cascade()
+        return game_over
 
 def play( model, start_level: int ):
     n_safe_tele = min( 10, start_level )
     game = RobotsGame( start_level, n_safe_tele )
 
     print( game.round(), n_safe_tele )
-    move( game, model )
 
+    round = game.round()
+
+    game_over = False
+    while not game_over:
+        if game.round() > round:
+            round = game.round()
+            print( "Starting round {} with {} safe teleports".format( round, game.n_safe_teleports_remaining() ) )
+
+        maybe_cascade( game )
+        game_over = move( game, model )
+
+    print( game.round(), n_safe_tele, game.latest_result() )
     
 if __name__ == '__main__':
     

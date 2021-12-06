@@ -61,7 +61,17 @@ def move( game, model ) -> bool:
     print( pred.shape, pred_node_i )
 
     pred_node = t.input_tensors.cached_nodes[ pred_node_i ]
-    print( int(pred_node.special_case) )
+    pred_node_int = int(pred_node.special_case)
+    print( pred_node.special_case, pred_node_int )
+
+    tele = pred_node_int > 9 # TODO
+    if tele:
+        game_over = game.teleport()
+    else:
+        print( pred_node.dx(), pred_node.dy() )
+        game_over = game.move_human( pred_node.dx(), pred_node.dy() )
+    
+    return game_over
 
 def play( model, start_level: int ):
     n_safe_tele = min( 10, start_level )

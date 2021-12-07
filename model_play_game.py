@@ -66,7 +66,7 @@ def maybe_cascade( game ) -> bool:
         game_over = game.cascade()
         return game_over
 
-def play( model, start_level: int ):
+def play( model, start_level: int, stop_level: int ):
     n_safe_tele = min( 10, start_level )
     game = RobotsGame( start_level, n_safe_tele )
 
@@ -78,20 +78,23 @@ def play( model, start_level: int ):
     while not game_over:
         if game.round() > round:
             round = game.round()
+            if round == stop_level:
+                break
             print( "Starting round {} with {} safe teleports".format( round, game.n_safe_teleports_remaining() ) )
 
         maybe_cascade( game )
         game_over = move( game, model )
 
-    print( game.round(), n_safe_tele, game.latest_result() )
+    print( "FINAL", game.round(), game.n_safe_teleports_remaining(), game.latest_result() )
     
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
     parser.add_argument( "--model", help="Where should we save the output model?", required=True, type=str )
     parser.add_argument( "--start_level", help="What level should we start at?", default=1, type=int )
+    parser.add_argument( "--stop_level", help="What level should we stop at?", default=9999, type=int )
     args = parser.parse_args()
 
     custom_objects = { "XENetConv": XENetConv }
     model = load_model( args.model, custom_objects=custom_objects )
-    play( model, args.start_level )
+    play( model, args.start_level, args.stop_level )

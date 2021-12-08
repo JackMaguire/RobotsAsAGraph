@@ -26,78 +26,24 @@ from spektral.data.dataset import Graph
 
 import spektral
 
+def print_layers( model ):
+    for w in model.trainable_weights:
+        print( w.name, w.shape )
+    
+
 if __name__ == '__main__':
     # args
     parser = argparse.ArgumentParser()
     parser.add_argument( "--model", help="Where should we save the output model?", required=True, type=str )
-    #parser.add_argument( "--start_level", help="What level should we start at?", default=1, type=int )
-    #parser.add_argument( "--stop_level", help="What level should we stop at?", default=9999, type=int )
+    parser.add_argument( "--just_print_layers", dest='just_print_layers', action='store_true')
+    parser.set_defaults( just_print_layers=False )
+
     args = parser.parse_args()
 
     # load
     custom_objects = { "XENetConv": XENetConv }
     model = load_model( args.model, custom_objects=custom_objects )
 
-    for layer in model.layers:
-        print( layer.name, len(layer.weights) )
-        for l in layer.weights:
-            print( l.name, l.shape )
-    
-
-'''
-For one XENet layer:
-X_in 0
-E_in 0
-batch_normalization 4
-batch_normalization/gamma:0 (10,)
-batch_normalization/beta:0 (10,)
-batch_normalization/moving_mean:0 (10,)
-batch_normalization/moving_variance:0 (10,)
-batch_normalization_1 4
-batch_normalization_1/gamma:0 (8,)
-batch_normalization_1/beta:0 (8,)
-batch_normalization_1/moving_mean:0 (8,)
-batch_normalization_1/moving_variance:0 (8,)
-dense 2
-dense/kernel:0 (10, 16)
-dense/bias:0 (16,)
-A_in 0
-dense_1 2
-dense_1/kernel:0 (8, 16)
-dense_1/bias:0 (16,)
-xe_net_conv 13
-xe_net_conv/dense/kernel:0 (64, 32)
-xe_net_conv/dense/bias:0 (32,)
-xe_net_conv/dense_1/kernel:0 (32, 32)
-xe_net_conv/dense_1/bias:0 (32,)
-xe_net_conv/p_re_lu/alpha:0 (32,)
-xe_net_conv/dense_2/kernel:0 (80, 16)
-xe_net_conv/dense_2/bias:0 (16,)
-xe_net_conv/dense_3/kernel:0 (32, 0)
-xe_net_conv/dense_3/bias:0 (0,)
-xe_net_conv/dense_4/kernel:0 (32, 1)
-xe_net_conv/dense_4/bias:0 (1,)
-xe_net_conv/dense_5/kernel:0 (32, 1)
-xe_net_conv/dense_5/bias:0 (1,)
-I_in 0
-dense_2 2
-dense_2/kernel:0 (16, 16)
-dense_2/bias:0 (16,)
-tf.math.reduce_max 0
-dense_3 2
-dense_3/kernel:0 (16, 1)
-dense_3/bias:0 (1,)
-tf.__operators__.add 0
-tf.math.unsorted_segment_max 0
-tf.compat.v1.gather 0
-L_in 0
-tf.compat.v1.shape 0
-tf.math.subtract 0
-tf.reshape 0
-tf.math.exp 0
-tf.math.multiply 0
-tf.math.unsorted_segment_sum 0
-tf.__operators__.add_1 0
-tf.compat.v1.gather_1 0
-tf.math.truediv 0
-'''
+    if args.just_print_layers:
+        print_layers( model )
+        exit( 0 )

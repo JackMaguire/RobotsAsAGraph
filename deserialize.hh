@@ -29,6 +29,7 @@ Key {
 struct DataPoint {
   robots_core::RobotsGame game;
   Key key = Key::NONE;
+  int level = -1;
 };
 
 struct Tensors {
@@ -68,6 +69,7 @@ deserialize( std::string const & data_string ){
     tokens[0], level, n_tele, 0 );
 
   dp.key = move;
+  dp.level = level;
 
   //Sanity check:
   //if( move == Key::D ) std::cout << tokens[3] << std::endl;

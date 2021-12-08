@@ -41,14 +41,33 @@ def instrumentation( model, layer_names ):
     data = {}
 
     for w in model.trainable_weights:
-        print( w.name, w.shape )    
+        print( w.name, w.shape ) 
+        #print( w.numpy() )
+        #w2 = w.numpy() + 1
+        #print( w2 )
+        #exit( 0 )
         if w.name in layer_names:
             shape = [ i for i in w.shape ]
             print( w.shape, shape )
             data[ w.name ] = ng.p.Array( shape=shape )
 
-    inst = ng.p.Instrumentation( *data )
-    print( inst )
+    return ng.p.Instrumentation( **data )
+
+def run_single_loop( opt, model ):
+    x = opt.ask()[1]
+
+    # TODO reset model
+
+    # the slow method...
+    for w in model.trainable_weights:
+        if w.name in x:
+            #print( w.name, type(w) )
+            #print( w, x[ w.name ].value )
+            w.assign( w+x[ w.name ].value )
+            #print( w )
+            
+    run_single_loop( opt, model )
+    
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -79,4 +98,9 @@ if __name__ == '__main__':
     #play( model )
 
     inst = instrumentation( model, args.layers )
-    
+
+    optname = "RealSpacePSO"
+
+    opt = ng.optimizers.registry[ optname ]( parametrization=inst, budget=10000, num_workers=1 )
+
+    run_single_loop( opt, model )

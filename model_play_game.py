@@ -66,7 +66,7 @@ def maybe_cascade( game ) -> bool:
         game_over = game.cascade()
         return game_over
 
-def play( model, start_level: int, stop_level: int ):
+def play( model, start_level: int = 1, stop_level: int = 999):
     n_safe_tele = min( 10, start_level )
     game = RobotsGame( start_level, n_safe_tele )
 

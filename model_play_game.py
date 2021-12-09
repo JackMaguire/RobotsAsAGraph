@@ -86,6 +86,8 @@ def play( model, start_level: int = 1, stop_level: int = 999):
         game_over = move( game, model )
 
     print( "FINAL", game.round(), game.n_safe_teleports_remaining(), game.latest_result() )
+
+    return game.round(), game.n_safe_teleports_remaining(), game.latest_result()
     
 if __name__ == '__main__':
     

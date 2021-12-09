@@ -54,8 +54,10 @@ def instrumentation( model, layer_names ):
     return ng.p.Instrumentation( **data )
 
 def run_single_loop( opt, model ):
-    x = opt.ask()[1]
+    sample = opt.ask()
+    x = sample[1]
 
+    print( x )
     # TODO reset model
 
     # the slow method...
@@ -66,8 +68,11 @@ def run_single_loop( opt, model ):
             w.assign( w+x[ w.name ].value )
             #print( w )
             
-    run_single_loop( opt, model )
-    
+    round, n_tele, result = play( model )
+
+    opt.tell( sample, -1 )
+
+    return
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -99,8 +104,14 @@ if __name__ == '__main__':
 
     inst = instrumentation( model, args.layers )
 
-    optname = "RealSpacePSO"
+    #optname = "RealSpacePSO"
+    optname = "NelderMead"
 
     opt = ng.optimizers.registry[ optname ]( parametrization=inst, budget=10000, num_workers=1 )
 
-    run_single_loop( opt, model )
+    for _ in range( 0, 10 ):
+        run_single_loop( opt, model )
+
+    # https://github.com/facebookresearch/nevergrad/issues/180
+    del opt
+    exit( 0 )

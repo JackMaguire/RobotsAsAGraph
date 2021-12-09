@@ -53,7 +53,7 @@ def instrumentation( model, layer_names ):
 
     return ng.p.Instrumentation( **data )
 
-def run_single_loop( opt, model ):
+def run_single_loop( opt, model, scale_coeff ):
     sample = opt.ask()
     x = sample[1]
 
@@ -65,7 +65,7 @@ def run_single_loop( opt, model ):
         if w.name in x:
             #print( w.name, type(w) )
             #print( w, x[ w.name ].value )
-            w.assign( w+x[ w.name ].value )
+            w.assign( w + ( scale_coeff * x[ w.name ].value ) )
             #print( w )
             
     round, n_tele, result = play( model )
@@ -83,6 +83,8 @@ def get_args():
     parser.set_defaults( just_print_layers=False )
 
     parser.add_argument('--layers', nargs="*")
+
+    parser.add_argument('--scale_coeff', default=10, type=float )
 
     return parser.parse_args()
 
@@ -110,7 +112,7 @@ if __name__ == '__main__':
     opt = ng.optimizers.registry[ optname ]( parametrization=inst, budget=10000, num_workers=1 )
 
     for _ in range( 0, 10 ):
-        run_single_loop( opt, model )
+        run_single_loop( opt, model, args.scale_coeff )
 
     # https://github.com/facebookresearch/nevergrad/issues/180
     del opt

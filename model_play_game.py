@@ -85,7 +85,7 @@ def play( model, start_level: int = 1, stop_level: int = 999, verbose = True ):
         maybe_cascade( game )
         game_over = move( game, model )
 
-    print( "FINAL", game.round(), game.n_safe_teleports_remaining(), game.latest_result() )
+    if verbose: print( "FINAL", game.round(), game.n_safe_teleports_remaining(), game.latest_result() )
 
     return game.round(), game.n_safe_teleports_remaining(), game.latest_result()
     

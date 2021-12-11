@@ -86,6 +86,7 @@ def get_args():
     parser.add_argument('--layers', nargs="*")
 
     parser.add_argument('--scale_coeff', default=10, type=float )
+    parser.add_argument('--model_dir', required=True, type=str )
 
     return parser.parse_args()
 
@@ -101,7 +102,9 @@ def run_head( args, comm, nprocs ):
 
     t0 = time.time()
 
-    while True:
+    score_for_iter0 = None
+
+    for iter in range( 0, 999999 ):
         sample = opt.ask()
         x = sample[1]
 
@@ -110,15 +113,22 @@ def run_head( args, comm, nprocs ):
             send_bundle_to_node( comm, x, i )
 
         # Listen
-        running_score = 0.0
+        running_score = float(0.0)
         for i in range( 1, nprocs ):
             score, source = get_next_message( comm )
             assert( isinstance( score, float ) )
             running_score += score
         running_score = running_score / float(nprocs-1)
 
+        if score_for_iter0 == None:
+            assert( iter == 0 )
+            score_for_iter0 = running_score
+        elif running_score < score_for_iter0:
+            model.save( "{}/iter_{}.h5".format( args.model_dir, iter ) )
+
+
         opt.tell( sample, running_score )
-        print( "HEAD", time.time()-t0, score, "TODO save all this data" )
+        print( "HEAD", iter, time.time()-t0, running_score, "TODO save all this data" )
         sys.stdout.flush()
 
     # Clean up
@@ -142,14 +152,19 @@ def run_scorer( args, comm, head_node_rank ):
                 w.assign( w + ( args.scale_coeff * x[ w.name ].value ) )
     
         # Score
-        nloop = 2
+        nloop = 5
         score = 0.0
+        scores = []
         for _ in range( 0, nloop ):
             round, n_tele, result = play( model, verbose=False )
             if result == MoveResult.YOU_WIN_GAME:
                 round += 1
-            score -= round
+            scores.append( round )
+            score -= float(round)
         score = float(score)/float(nloop)
+
+        #print( "WORKER", scores, score )
+        sys.stdout.flush()
 
         # Talk
         send_bundle_to_node( comm, score, head_node_rank )

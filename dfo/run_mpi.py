@@ -108,6 +108,8 @@ def run_head( args, comm, nprocs ):
         sample = opt.ask()
         x = sample[1]
 
+        tloop = time.time()
+
         # Talk
         for i in range( 1, nprocs ):
             send_bundle_to_node( comm, x, i )
@@ -128,7 +130,8 @@ def run_head( args, comm, nprocs ):
 
 
         opt.tell( sample, running_score )
-        print( "HEAD", iter, time.time()-t0, running_score, "TODO save all this data" )
+        tfinal = time.time()
+        print( "HEAD", iter, tfinal-t0, tfinal-tloop, running_score )
         sys.stdout.flush()
 
     # Clean up
@@ -152,7 +155,7 @@ def run_scorer( args, comm, head_node_rank ):
                 w.assign( w + ( args.scale_coeff * x[ w.name ].value ) )
     
         # Score
-        nloop = 5
+        nloop = 10
         score = 0.0
         scores = []
         for _ in range( 0, nloop ):

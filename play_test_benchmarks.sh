@@ -4,7 +4,7 @@
     for x in {1..100}; do
 	for start in 1 23 45; do
 	    mkdir play_test_benchmarks/$start 2>/dev/null
-	    for key in 3.1; do
+	    for key in 1.2; do
 		model="train_better_softmax2/nconv${key}.h5.checkpoint.h5"
 		echo $model $start $((start+22)) $x $(basename $model)
 	    done

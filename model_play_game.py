@@ -66,11 +66,11 @@ def maybe_cascade( game ) -> bool:
         game_over = game.cascade()
         return game_over
 
-def play( model, start_level: int = 1, stop_level: int = 999):
+def play( model, start_level: int = 1, stop_level: int = 999, verbose = True ):
     n_safe_tele = min( 10, start_level )
     game = RobotsGame( start_level, n_safe_tele )
 
-    print( game.round(), n_safe_tele )
+    if verbose: print( game.round(), n_safe_tele )
 
     round = game.round()
 
@@ -80,7 +80,7 @@ def play( model, start_level: int = 1, stop_level: int = 999):
             round = game.round()
             if round == stop_level:
                 break
-            print( "Starting round {} with {} safe teleports".format( round, game.n_safe_teleports_remaining() ) )
+            if verbose: print( "Starting round {} with {} safe teleports".format( round, game.n_safe_teleports_remaining() ) )
 
         maybe_cascade( game )
         game_over = move( game, model )

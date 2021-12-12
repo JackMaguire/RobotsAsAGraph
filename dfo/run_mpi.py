@@ -158,7 +158,7 @@ def run_scorer( args, comm, head_node_rank ):
         model = apply_weights_to_new_model( args, x )
     
         # Score
-        nloop = 10
+        nloop = 5
         score = 0.0
         scores = []
         for _ in range( 0, nloop ):

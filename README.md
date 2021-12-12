@@ -43,14 +43,13 @@ wait
 
 ## Evaluate
 
-```sh
-# TODO
-```
+See `play_test_benchmarks.sh` and `play_test_benchmarks.full_game.sh`
 
 ## Derivative Free Refinement
 
 ```sh
 mkdir 1.1.dfo
 mkdir 1.1.dfo/attention
-mpirun -np 64 python3 dfo/run_mpi.py --output_dir 1.1.dfo/attention --model train/nconv1.1.h5.checkpoint.h5 --layers xe_net_conv/dense_4/kernel:0 xe_net_conv/dense_4/bias:0 xe_net_conv/dense_5/kernel:0 xe_net_conv/dense_5/bias:0 1>1.1.dfo/attention/log 
+nproc=`grep processor /proc/cpuinfo | wc -l`
+mpirun -np $nproc python3 dfo/run_mpi.py --output_dir 1.1.dfo/attention --model train/nconv1.1.h5.checkpoint.h5 --layers xe_net_conv/dense_4/kernel:0 xe_net_conv/dense_4/bias:0 xe_net_conv/dense_5/kernel:0 xe_net_conv/dense_5/bias:0 1>1.1.dfo/attention/log 
 ```

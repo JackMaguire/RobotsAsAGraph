@@ -86,13 +86,20 @@ def get_args():
     parser.add_argument('--layers', nargs="*")
 
     parser.add_argument('--scale_coeff', default=10, type=float )
-    parser.add_argument('--model_dir', required=True, type=str )
+    parser.add_argument('--output_dir', required=True, type=str )
 
     return parser.parse_args()
 
 def load_model_from_disk( model_name ):
     custom_objects = { "XENetConv": XENetConv }
     model = load_model( model_name, custom_objects=custom_objects )
+    return model
+
+def apply_weights_to_new_model( args, x ):
+    model = load_model_from_disk( args.model )
+    for w in model.trainable_weights:
+        if w.name in x:
+            w.assign( w + ( args.scale_coeff * x[ w.name ].value ) )
     return model
 
 def run_head( args, comm, nprocs ):
@@ -121,15 +128,16 @@ def run_head( args, comm, nprocs ):
             assert( isinstance( score, float ) )
             running_score += score
         running_score = running_score / float(nprocs-1)
+        opt.tell( sample, running_score )
 
         if score_for_iter0 == None:
             assert( iter == 0 )
             score_for_iter0 = running_score
         elif running_score < score_for_iter0:
-            model.save( "{}/iter_{}.h5".format( args.model_dir, iter ) )
+            apply_weights_to_new_model( args, x ).save( "{}/iter_{}.h5".format( args.output_dir, iter ) )
+            opt.dump( "{}/iter_{}.opt.pkl".format( args.output_dir, iter ) )
 
 
-        opt.tell( sample, running_score )
         tfinal = time.time()
         print( "HEAD", iter, tfinal-t0, tfinal-tloop, running_score )
         sys.stdout.flush()
@@ -137,8 +145,6 @@ def run_head( args, comm, nprocs ):
     # Clean up
     # https://github.com/facebookresearch/nevergrad/issues/180
     del opt
-
-
 
 def run_scorer( args, comm, head_node_rank ):
 
@@ -149,10 +155,7 @@ def run_scorer( args, comm, head_node_rank ):
         assert( source == head_node_rank )
 
         # load and assign fresh model
-        model = load_model_from_disk( args.model )
-        for w in model.trainable_weights:
-            if w.name in x:
-                w.assign( w + ( args.scale_coeff * x[ w.name ].value ) )
+        model = apply_weights_to_new_model( args, x )
     
         # Score
         nloop = 10

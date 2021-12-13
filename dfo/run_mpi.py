@@ -126,7 +126,7 @@ def run_head( args, comm, nprocs ):
 
         tloop = time.time()
 
-        total_n_points = 500
+        total_n_points = 200
         n_points_to_give = total_n_points
         n_points_received = 0
 
@@ -168,7 +168,7 @@ def run_head( args, comm, nprocs ):
 
 
         tfinal = time.time()
-        print( "HEAD", iter, tfinal-t0, tfinal-tloop, running_score )
+        print( "HEAD", iter, tfinal-t0, tfinal-tloop, sample_score )
         sys.stdout.flush()
 
     # Clean up
@@ -198,7 +198,7 @@ def run_scorer( args, comm, head_node_rank ):
             round += 1
         score = -1.0 * float(round)
 
-        #print( "WORKER", score )
+        #print( "WORKER", score, int(result), (result == MoveResult.YOU_WIN_GAME) )
         #sys.stdout.flush()
 
         # Talk

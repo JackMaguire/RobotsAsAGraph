@@ -111,6 +111,7 @@ def run_head( args, comm, nprocs ):
     model = load_model_from_disk( args.model )
     inst = instrumentation( model, args.layers )
     opt = ng.optimizers.registry[ args.opt ]( parametrization=inst, budget=10000, num_workers=1 )
+    opt.enable_pickling()
 
     t0 = time.time()
 

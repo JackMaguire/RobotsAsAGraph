@@ -189,7 +189,7 @@ if __name__ == '__main__':
     # load
     if args.just_print_layers:
         if rank == 0:
-            print_layers( model )
+            print_layers( load_model_from_disk( args.model ) )
         exit( 0 )
 
     if rank == head_node_rank:

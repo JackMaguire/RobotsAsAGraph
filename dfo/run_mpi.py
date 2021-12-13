@@ -118,8 +118,6 @@ def run_head( args, comm, nprocs ):
 
     t0 = time.time()
 
-    score_for_iter0 = None
-
     for iter in range( 0, 999999 ):
         sample = opt.ask()
         x = sample[1]
@@ -159,16 +157,14 @@ def run_head( args, comm, nprocs ):
         sample_score = running_score / float(total_n_points)
         opt.tell( sample, sample_score )
 
-        if iter == 0:
-            score_for_iter0 = running_score
-        elif running_score < score_for_iter0:
+        if sample_score < -33: #arbitrary cutoff
             # GOOD DATA POINT! LOG IT!
             apply_weights_to_new_model( args, x ).save( "{}/iter_{}.h5".format( args.output_dir, iter ) )
             opt.dump( "{}/iter_{}.opt.pkl".format( args.output_dir, iter ) )
 
-
         tfinal = time.time()
         print( "HEAD", iter, tfinal-t0, tfinal-tloop, sample_score )
+        print( "DUMP", iter, args.scale_coeff, repr(sample) )
         sys.stdout.flush()
 
     # Clean up

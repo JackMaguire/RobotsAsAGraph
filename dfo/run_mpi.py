@@ -107,6 +107,9 @@ def apply_weights_to_new_model( args, x ):
             w.assign( w + ( args.scale_coeff * x[ w.name ].value ) )
     return model
 
+def signal_for_model_reuse():
+    return "REUSE_EXISTING_MODEL"
+
 def run_head( args, comm, nprocs ):
     model = load_model_from_disk( args.model )
     inst = instrumentation( model, args.layers )
@@ -123,23 +126,43 @@ def run_head( args, comm, nprocs ):
 
         tloop = time.time()
 
-        # Talk
-        for i in range( 1, nprocs ):
-            send_bundle_to_node( comm, x, i )
+        total_n_points = 500
+        n_points_to_give = total_n_points
+        n_points_received = 0
 
-        # Listen
+        # Talk
+        for i in range( 1, min(nprocs,n_points_to_give+1) ):
+            send_bundle_to_node( comm, x, i )
+            n_points_to_give -= 1
+
+        # Talk and Listen
         running_score = float(0.0)
-        for i in range( 1, nprocs ):
+        while n_points_to_give > 0:
             score, source = get_next_message( comm )
+            n_points_received += 1
             assert( isinstance( score, float ) )
             running_score += score
-        running_score = running_score / float(nprocs-1)
-        opt.tell( sample, running_score )
+            
+            # Tell node to spin up another one
+            send_bundle_to_node( comm, signal_for_model_reuse(), source )
+            n_points_to_give -= 1
 
-        if score_for_iter0 == None:
-            assert( iter == 0 )
+
+        # Listen
+        while n_points_received < total_n_points:
+            score, source = get_next_message( comm )
+            n_points_received += 1
+            assert( isinstance( score, float ) )
+            running_score += score
+
+
+        sample_score = running_score / float(total_n_points)
+        opt.tell( sample, sample_score )
+
+        if iter == 0:
             score_for_iter0 = running_score
         elif running_score < score_for_iter0:
+            # GOOD DATA POINT! LOG IT!
             apply_weights_to_new_model( args, x ).save( "{}/iter_{}.h5".format( args.output_dir, iter ) )
             opt.dump( "{}/iter_{}.opt.pkl".format( args.output_dir, iter ) )
 
@@ -154,6 +177,8 @@ def run_head( args, comm, nprocs ):
 
 def run_scorer( args, comm, head_node_rank ):
 
+    curr_model = None
+
     while True:
 
         # Listen
@@ -161,22 +186,20 @@ def run_scorer( args, comm, head_node_rank ):
         assert( source == head_node_rank )
 
         # load and assign fresh model
-        model = apply_weights_to_new_model( args, x )
+        if x == signal_for_model_reuse():
+            model = curr_model
+        else:
+            model = apply_weights_to_new_model( args, x )
+            curr_model = model
     
         # Score
-        nloop = 5
-        score = 0.0
-        scores = []
-        for _ in range( 0, nloop ):
-            round, n_tele, result = play( model, verbose=False )
-            if result == MoveResult.YOU_WIN_GAME:
-                round += 1
-            scores.append( round )
-            score -= float(round)
-        score = float(score)/float(nloop)
+        round, n_tele, result = play( model, verbose=False )
+        if result == MoveResult.YOU_WIN_GAME:
+            round += 1
+        score = -1.0 * float(round)
 
-        #print( "WORKER", scores, score )
-        sys.stdout.flush()
+        #print( "WORKER", score )
+        #sys.stdout.flush()
 
         # Talk
         send_bundle_to_node( comm, score, head_node_rank )

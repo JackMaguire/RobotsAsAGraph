@@ -41,11 +41,16 @@ from mpi4py import MPI
 def send_bundle_to_node( comm, bundle, node ):
     comm.send( bundle, dest=node )
 
-def get_next_message( comm ):
+def get_next_message( comm, source=MPI.ANY_SOURCE ):
     status = MPI.Status()
-    bundle = comm.recv( source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status )
+    bundle = comm.recv( source=source, tag=MPI.ANY_TAG, status=status )
     source = status.Get_source()
     return bundle, source
+
+def idle_wait_for_next_message( comm, source ):
+    while not comm.Iprobe( source=source ):
+        time.sleep(1)
+    return get_next_message( comm=comm, source=source )
 
 
 
@@ -151,7 +156,7 @@ def run_scorer( args, comm, head_node_rank ):
     while True:
 
         # Listen
-        x, source = get_next_message( comm )
+        x, source = idle_wait_for_next_message( comm, source=head_node_rank )
         assert( source == head_node_rank )
 
         # load and assign fresh model

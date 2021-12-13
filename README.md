@@ -4,7 +4,7 @@
 
 ### Prepare Data
 
-```sh
+```console
 $ ls data/
 all_data
 
@@ -48,7 +48,7 @@ See `play_test_benchmarks.sh` and `play_test_benchmarks.full_game.sh`
 ## Derivative Free Refinement
 
 We will be using `dfo/run_mpi.py`
-```sh
+```console
 $ python3 dfo/run_mpi.py --help
 usage: run_mpi.py [-h] --model MODEL [--opt OPT] [--just_print_layers] [--layers [LAYERS [LAYERS ...]]]
                   [--scale_coeff SCALE_COEFF] --output_dir OUTPUT_DIR
@@ -65,7 +65,7 @@ optional arguments:
 
 
 List layers available to optimize. At the time of writing this, you need to pass a dummy argument to `--output_dir`
-```sh
+```console
 $ python3 dfo/run_mpi.py --model train/nconv1.1.h5.checkpoint.h5 --just_print_layers --output_dir .
 dense/kernel:0 (10, 16)
 dense/bias:0 (16,)

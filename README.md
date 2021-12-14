@@ -2,6 +2,20 @@
 
 ## Setup
 
+### Install and Build
+
+```sh
+git submodule update --init --recursive
+
+pip3 install pybind11
+g++ python_bindings.cc -o robots_core$(python3-config --extension-suffix) -O3 -Wall -Wextra -Iinclude -Iextern/RobotsCore/extern/pybind11/include -std=c++17 -fPIC $(python3 -m pybind11 --includes) -shared -Iextern/RobotsCore/include/
+
+pip3 install nevergrad spektral
+
+sudo apt-get install mpich
+pip3 install mpi4py
+```
+
 ### Prepare Data
 
 ```console
@@ -17,12 +31,6 @@ $ ./prepare_data
 
 $ ls data/
 all_data  training_data.txt  validation_data.txt
-```
-
-### Prepare PyBind11
-
-```sh
-#TODO
 ```
 
 ## Train
@@ -92,6 +100,8 @@ dense_3/bias:0 (1,)
 
 Create destination and run on selected layers
 ```sh
+cd dfo ; for x in ../*.so; do ln -s $x; done ; cd ..
+
 mkdir 1.1.dfo
 mkdir 1.1.dfo/attention
 nproc=`grep processor /proc/cpuinfo | wc -l`

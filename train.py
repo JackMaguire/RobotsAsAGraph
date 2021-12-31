@@ -258,6 +258,7 @@ def train_by_hand( model, training_loader, validation_loader, model_name ):
 
         validation_loss = evaluate_model( model, validation_loader, loss_fn )
         #print( "VAL LOSS", validation_loss )
+        validation_loss_for_logic = np.round( 2*validation_loss, 4 )
         validation_loss = np.round( validation_loss, 5 )
 
         print("Epoch: {0} Training Loss: {1:.5f} Validation Loss: {2:.5f}".format(epoch, loss.numpy() / step, np.round( validation_loss, 5 )))
@@ -273,9 +274,9 @@ def train_by_hand( model, training_loader, validation_loader, model_name ):
                 else:
                     assert not isinstance( layer, BatchNormalization )
 
-        if validation_loss < min_loss:
+        if validation_loss_for_logic < min_loss:
             print( "NEW MIN" )
-            min_loss = validation_loss
+            min_loss = validation_loss_for_logic
             best_weights = model.get_weights()
             epoch_for_min_loss = epoch
             model.save( model_name + ".checkpoint.h5" )

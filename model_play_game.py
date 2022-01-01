@@ -21,7 +21,13 @@ from spektral.data.utils import to_disjoint
 from spektral.utils.sparse import sp_matrix_to_sp_tensor
 from spektral.layers import XENetConv, CrystalConv, ECCConv
 
-def move( game, model ) -> bool:
+def maybe_recurse( game, recursion_depth ):
+    return run_recursive_seach( game, 7, depth );
+
+def move( game, model, recursion_depth ) -> bool:
+    if maybe_recurse( game, recursion_depth ):
+        return game.game_is_over()
+
     #silly append pattern, but maximizes similarity to train.py
     Xs = []
     As = []
@@ -66,7 +72,7 @@ def maybe_cascade( game ) -> bool:
         game_over = game.cascade()
         return game_over
 
-def play( model, start_level: int = 1, stop_level: int = 999, verbose = True ):
+def play( model, start_level: int = 1, stop_level: int = 999, recursion_depth:int, verbose = True ):
     n_safe_tele = min( 10, start_level )
     game = RobotsGame( start_level, n_safe_tele )
 
@@ -83,7 +89,7 @@ def play( model, start_level: int = 1, stop_level: int = 999, verbose = True ):
             if verbose: print( "Starting round {} with {} safe teleports".format( round, game.n_safe_teleports_remaining() ) )
 
         maybe_cascade( game )
-        game_over = move( game, model )
+        game_over = move( game, model, recursion_depth=recursion_depth )
 
     if verbose: print( "FINAL", game.round(), game.n_safe_teleports_remaining(), game.latest_result() )
 
@@ -95,8 +101,9 @@ if __name__ == '__main__':
     parser.add_argument( "--model", help="Where should we save the output model?", required=True, type=str )
     parser.add_argument( "--start_level", help="What level should we start at?", default=1, type=int )
     parser.add_argument( "--stop_level", help="What level should we stop at?", default=9999, type=int )
+    parser.add_argument( "--recursion_depth", help="Recursion Depth?", default=0, type=int )
     args = parser.parse_args()
 
     custom_objects = { "XENetConv": XENetConv }
     model = load_model( args.model, custom_objects=custom_objects )
-    play( model, args.start_level, args.stop_level )
+    play( model, args.start_level, args.stop_level, recursion_depth=args.recursion_depth )

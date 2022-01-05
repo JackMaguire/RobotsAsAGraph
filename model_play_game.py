@@ -21,8 +21,8 @@ from spektral.data.utils import to_disjoint
 from spektral.utils.sparse import sp_matrix_to_sp_tensor
 from spektral.layers import XENetConv, CrystalConv, ECCConv
 
-def maybe_recurse( game, recursion_depth ):
-    return run_recursive_seach( game, 7, depth );
+def maybe_recurse( game, recursion_depth: int ):
+    return robots_core.strategy.run_recursive_seach( game, 7, recursion_depth );
 
 def move( game, model, recursion_depth ) -> bool:
     if maybe_recurse( game, recursion_depth ):
@@ -72,7 +72,7 @@ def maybe_cascade( game ) -> bool:
         game_over = game.cascade()
         return game_over
 
-def play( model, start_level: int = 1, stop_level: int = 999, recursion_depth:int, verbose = True ):
+def play( model, start_level: int = 1, stop_level: int = 999, recursion_depth: int = 0, verbose = True ):
     n_safe_tele = min( 10, start_level )
     game = RobotsGame( start_level, n_safe_tele )
 

@@ -93,6 +93,9 @@ def get_args():
     parser.add_argument('--scale_coeff', default=10, type=float )
     parser.add_argument('--output_dir', required=True, type=str )
 
+    parser.add_argument('--recursion_depth', default=0, type=int )
+
+    
     return parser.parse_args()
 
 def load_model_from_disk( model_name ):
@@ -114,7 +117,7 @@ def run_head( args, comm, nprocs ):
     model = load_model_from_disk( args.model )
     inst = instrumentation( model, args.layers )
     opt = ng.optimizers.registry[ args.opt ]( parametrization=inst, budget=10000, num_workers=1 )
-    opt.enable_pickling()
+    #opt.enable_pickling()
 
     t0 = time.time()
 
@@ -160,7 +163,7 @@ def run_head( args, comm, nprocs ):
         if sample_score < -33: #arbitrary cutoff
             # GOOD DATA POINT! LOG IT!
             apply_weights_to_new_model( args, x ).save( "{}/iter_{}.h5".format( args.output_dir, iter ) )
-            opt.dump( "{}/iter_{}.opt.pkl".format( args.output_dir, iter ) )
+            #opt.dump( "{}/iter_{}.opt.pkl".format( args.output_dir, iter ) )
 
         tfinal = time.time()
         print( "HEAD", iter, tfinal-t0, tfinal-tloop, sample_score )
@@ -189,7 +192,7 @@ def run_scorer( args, comm, head_node_rank ):
             curr_model = model
     
         # Score
-        round, n_tele, result = play( model, verbose=False )
+        round, n_tele, result = play( model, verbose=False, recursion_depth = args.recursion_depth )
         if result == MoveResult.YOU_WIN_GAME:
             round += 1
         score = -1.0 * float(round)
@@ -221,4 +224,3 @@ if __name__ == '__main__':
         run_head( args, comm, nprocs )
     else:
         run_scorer( args, comm, head_node_rank )
-

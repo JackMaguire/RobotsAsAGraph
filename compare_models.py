@@ -119,6 +119,5 @@ if __name__ == '__main__':
         print( move1_conf_model1, move1_conf_model2 )
         print( move2_conf_model2, move2_conf_model1 )
 
-        if count > 10:
-            exit( 0 )
+        #if count > 10: exit( 0 )
         

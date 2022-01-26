@@ -58,7 +58,7 @@ class Loader( tf.keras.utils.Sequence ):
         a = sp_matrix_to_sp_tensor(a)
 
         assert tf.keras.backend.is_sparse( a )
-        return [x, a, e, i, legal_move_mask], np.vstack( Os ), t
+        return [x, a, e, i, legal_move_mask], np.vstack( Os ), t, s
 
     def on_epoch_end(self):
         pass
@@ -91,9 +91,10 @@ if __name__ == '__main__':
     model1 = load_model( args.model1, custom_objects=custom_objects )
     model2 = load_model( args.model2, custom_objects=custom_objects )
 
-    count = 0
+    print( "board,tele,level,_,my_move,pred1_move,pred2_move,move1_conf_model1,move1_conf_model2,move2_conf_model2,move2_conf_model1,disagreement" )
 
-    for x, y, t in loader:
+    count = 0
+    for x, y, t, s in loader:
         count += 1
         #x, y = *i
         #print( y )
@@ -115,9 +116,16 @@ if __name__ == '__main__':
         move1_conf_model1 = pred1[pred1_move_node][0]
         move1_conf_model2 = pred2[pred1_move_node][0]
 
-        print( my_move, pred1_move, pred2_move )
-        print( move1_conf_model1, move1_conf_model2 )
-        print( move2_conf_model2, move2_conf_model1 )
+        #print( my_move, pred1_move, pred2_move )
+        #print( move1_conf_model1, move1_conf_model2 )
+        #print( move2_conf_model2, move2_conf_model1 )
+        #d1 = abs(move1_conf_model1-move1_conf_model2)
+        #d2 = abs(move2_conf_model2-move2_conf_model1)
+
+        disagreement = abs(move1_conf_model1-move2_conf_model1)/move1_conf_model1 \
+            + abs(move1_conf_model2-move2_conf_model2)/move2_conf_model2
+
+        print( ','.join( [ str(i) for i in [s, my_move, pred1_move, pred2_move, move1_conf_model1, move1_conf_model2, move2_conf_model2, move2_conf_model1, disagreement] ] ) )
 
         #if count > 10: exit( 0 )
         

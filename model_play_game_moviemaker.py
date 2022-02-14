@@ -80,8 +80,8 @@ class MovieMaker():
         self.movie_prefix = movie_prefix
         self.frame_counter = 0
 
-    def capture_frame( game, move = None ):
-        filename = "{}frame_{i:05d}.svg".format( self.movie_prefix, self.frame_counter )
+    def capture_frame( self, game, move = None ):
+        filename = "{}frame_{}.svg".format( self.movie_prefix, str(self.frame_counter).zfill(5) )
 
         vs = rc_vis.VisSettings()
 
@@ -96,6 +96,8 @@ class MovieMaker():
         pic = rc_vis.to_svg_string( game.board(), vs )
         with open( filename, 'w' ) as f:
             f.write( pic )
+
+        self.frame_counter += 1
 
 
 def play( model, start_level: int = 1, stop_level: int = 999, recursion_depth: int = 0, verbose = True, movie_prefix : str = "" ):
@@ -122,7 +124,7 @@ def play( model, start_level: int = 1, stop_level: int = 999, recursion_depth: i
         if game_over:
             break
 
-        game_over = move( game, model, recursion_depth=recursion_depth )
+        game_over = move( game, model, recursion_depth=recursion_depth, movie_maker=movie_maker )
 
     if verbose: print( "FINAL", game.round(), game.n_safe_teleports_remaining(), game.latest_result() )
 
@@ -140,4 +142,4 @@ if __name__ == '__main__':
 
     custom_objects = { "XENetConv": XENetConv }
     model = load_model( args.model, custom_objects=custom_objects )
-    play( model, args.start_level, args.stop_level, recursion_depth=args.recursion_depth, movie_prefix=movie_prefix )
+    play( model, args.start_level, args.stop_level, recursion_depth=args.recursion_depth, movie_prefix=args.movie_prefix )

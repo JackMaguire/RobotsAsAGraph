@@ -72,9 +72,19 @@ def maybe_cascade( game ) -> bool:
         game_over = game.cascade()
         return game_over
 
-def play( model, start_level: int = 1, stop_level: int = 999, recursion_depth: int = 0, verbose = True ):
+class MovieMaker():
+    def __init__( self, movie_prefix ):
+        self.movie_prefix = movie_prefix
+        self.frame_counter = 0
+
+    def capture_frame( game, move = None ):
+        pass
+
+def play( model, start_level: int = 1, stop_level: int = 999, recursion_depth: int = 0, verbose = True, movie_prefix : str = "" ):
     n_safe_tele = min( 10, start_level )
     game = RobotsGame( start_level, n_safe_tele )
+
+    movie_maker = MovieMaker( movie_prefix )
 
     if verbose: print( game.round(), n_safe_tele )
 
@@ -88,7 +98,12 @@ def play( model, start_level: int = 1, stop_level: int = 999, recursion_depth: i
                 break
             if verbose: print( "Starting round {} with {} safe teleports".format( round, game.n_safe_teleports_remaining() ) )
 
-        maybe_cascade( game )
+        movie_maker.capture_frame( game )
+
+        game_over = maybe_cascade( game )
+        if game_over:
+            break
+
         game_over = move( game, model, recursion_depth=recursion_depth )
 
     if verbose: print( "FINAL", game.round(), game.n_safe_teleports_remaining(), game.latest_result() )
@@ -102,8 +117,9 @@ if __name__ == '__main__':
     parser.add_argument( "--start_level", help="What level should we start at?", default=1, type=int )
     parser.add_argument( "--stop_level", help="What level should we stop at?", default=9999, type=int )
     parser.add_argument( "--recursion_depth", help="Recursion Depth?", default=0, type=int )
+    parser.add_argument( "--movie_prefix", help="If given, where should we save the movie?", default="", type=str )
     args = parser.parse_args()
 
     custom_objects = { "XENetConv": XENetConv }
     model = load_model( args.model, custom_objects=custom_objects )
-    play( model, args.start_level, args.stop_level, recursion_depth=args.recursion_depth )
+    play( model, args.start_level, args.stop_level, recursion_depth=args.recursion_depth, movie_prefix=movie_prefix )

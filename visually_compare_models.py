@@ -106,7 +106,7 @@ def picture( s, pred1_move, pred2_move, fileprefix ):
 
     pic = rc_vis.to_svg_string( game.board(), vs )
     #print( pic )
-    with open( filename, 'r' ) as f:
+    with open( filename, 'w' ) as f:
         f.write( pic )
 
     

@@ -11,6 +11,7 @@
 py::module m_train = m.def_submodule( "train" );
 m_train.def( "make_tensors", &make_tensors );
 m_train.def( "deserialize", &deserialize );
+m_train.def( "Key2SC", &Key2SC );
 
 py::class_< Tensors > tensors( m_train, "Tensors" );
 tensors.def_readonly( "input_tensors", &Tensors::input_tensors );

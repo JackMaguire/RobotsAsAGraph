@@ -88,18 +88,20 @@ def picture( s, pred1_move, pred2_move, fileprefix ):
     filename = "{}_{}.svg".format( fileprefix, game.n_safe_teleports_remaining() )
 
     vs = rc_vis.VisSettings()
+
+    ma0 = rc_vis.MoveAnnotation()
+    ma0.type = Key2SC( dp.key )
+    ma0.rgb = "0,0,0"
+    vs.append_move(ma0)
+
     ma1 = rc_vis.MoveAnnotation()
-    #print( ma1.type, pred1_move )
-    #exit( 0 )
     ma1.type = pred1_move
-    ma1.rgb = "0,0,0"
-    #vs.moves.append( ma1 )
+    ma1.rgb = "10,235,235"
     vs.append_move(ma1)
 
     ma2 = rc_vis.MoveAnnotation()
     ma2.type = pred2_move
     ma2.rgb = "182,3,252"
-    #vs.moves.append( ma2 )
     vs.append_move(ma2)
 
     vs.label_elements = False

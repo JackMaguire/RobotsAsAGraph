@@ -2,6 +2,12 @@
 
 datafile="./what_did_dfo_learn.uniq.concise.csv"
 
+#only DFO tele points
+#awk '$5 == 13' $datafile > /tmp/temp_three_way_venn_diagram.dat
+awk '$5 == 4' $datafile > /tmp/temp_three_way_venn_diagram.dat
+datafile="/tmp/temp_three_way_venn_diagram.dat"
+
+
 #tele level my_move pred1_move pred2_move
 
 total_n_samples=$(grep -v tele $datafile | wc -l)

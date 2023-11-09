@@ -289,7 +289,7 @@ def train_by_hand( model, training_loader, validation_loader, model_name ):
                 learning_rate = learning_rate / 10.0
                 optimizer = Adam( learning_rate )
 
-        model.set_weights( best_weights )
+                model.set_weights( best_weights )
            
 
 def test2():
